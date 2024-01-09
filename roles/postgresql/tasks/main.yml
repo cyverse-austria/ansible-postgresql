@@ -1,0 +1,40 @@
+---
+- name: Get packages
+  ansible.builtin.package_facts:
+    manager: apt
+
+- name: Install postgresql {{ postgresql_version }}
+  when: ansible_facts.packages['postgresql-common'] is not defined
+  block:
+    - name: Update pkg cache
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: safe
+
+    - name: Install gnupg
+      ansible.builtin.apt:
+        name:
+          - gnupg2
+
+    - name: Add repo key
+      ansible.builtin.apt_key:
+        url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
+        state: present
+
+    - name: Cread source-file
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/pgdg.list
+        content: |
+          deb http://apt.postgresql.org/pub/repos/apt/ {{ ansible_lsb.codename }}-pgdg main
+        owner: root
+        group: root
+        mode: "0544"
+
+    - name: Install postgresql server/client ver {{ postgresql_version }}
+      ansible.builtin.apt:
+        update_cache: true
+        name:
+          - postgresql-{{ postgresql_version }}
+          - postgresql-client-{{ postgresql_version }}
+      notify:
+        - start postgresql
