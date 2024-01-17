@@ -1,6 +1,6 @@
 ---
 - name: Postgreql
-  hosts: all
+  hosts: postgres
   roles:
     - role: postgresql
       # postgresql_version: 12
