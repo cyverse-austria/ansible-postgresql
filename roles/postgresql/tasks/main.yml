@@ -5,6 +5,8 @@
 
 - name: Install postgresql {{ postgresql_version }}
   when: ansible_facts.packages['postgresql-common'] is not defined
+  notify:
+    - start postgresql
   block:
     - name: Update pkg cache
       ansible.builtin.apt:
@@ -36,5 +38,21 @@
         name:
           - postgresql-{{ postgresql_version }}
           - postgresql-client-{{ postgresql_version }}
-      notify:
-        - start postgresql
+
+- name: Change postgresql.conf 1/2
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
+    line: "listen_addresses = '*'"
+    state: present
+    insertbefore: '^port'
+  notify:
+    - restart postgresql
+
+- name: Change postgresql.conf 2/2
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/{{ postgresql_version }}/main/postgresql.conf
+    regex: '^(\s*ssl\s*=\s*on)\s*$'
+    line: '#\1'
+    backrefs: true
+  notify:
+    - restart postgresql
