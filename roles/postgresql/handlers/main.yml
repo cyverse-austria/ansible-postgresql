@@ -1,16 +1,7 @@
 ---
-- name: Start postgresql
-  ansible.builtin.systemd:
-    name: postgresql
-    state: started
-    enabled: true
-  listen: "start postgresql"
-
-- name: Restart postgresql
+- name: Retart postgresql
   ansible.builtin.systemd:
     name: postgresql
     state: restarted
     enabled: true
   listen: "restart postgresql"
-
-# handlers file for postgresql

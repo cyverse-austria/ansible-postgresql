@@ -6,7 +6,7 @@
 - name: Install postgresql {{ postgresql_version }}
   when: ansible_facts.packages['postgresql-common'] is not defined
   notify:
-    - start postgresql
+    - restart postgresql
   block:
     - name: Update pkg cache
       ansible.builtin.apt:
@@ -54,5 +54,36 @@
     regex: '^(\s*ssl\s*=\s*on)\s*$'
     line: '#\1'
     backrefs: true
+  notify:
+    - restart postgresql
+
+- name: Change pg_hba.conf 1/3
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
+    regex: "{{ item }}"
+    state: absent
+  notify:
+    - restart postgresql
+  with_items:
+    - '^local *all *postgres *peer'
+    - '^local *all *all *peer'
+
+- name: Change pg_hba.conf 2/3
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
+    regexp: '^local *all *all *md5'
+    line: "local   all             all                                     md5"
+    insertbefore: '^local'
+    firstmatch: true
+  notify:
+    - restart postgresql
+
+- name: Change pg_hba.conf 3/3
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
+    regexp: '^host *all *all *{{ postgresql_subnet }} *md5'
+    line: "host    all             all             {{ postgresql_subnet }}      md5"
+    insertbefore: '^host'
+    firstmatch: true
   notify:
     - restart postgresql
