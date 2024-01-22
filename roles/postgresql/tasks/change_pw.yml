@@ -1,0 +1,34 @@
+---
+- name: Install some python stuff
+  ansible.builtin.apt:
+    name:
+      - python3-psycopg2
+
+- name: Change pg_hba.conf temp
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
+    line: "local all postgres peer #tmp_pw_change"
+    insertbefore: '^local'
+    firstmatch: true
+
+- name: Restart database
+  ansible.builtin.systemd:
+    name: postgresql
+    state: restarted
+
+- name: PostgreSQL | Change postgres password
+  community.postgresql.postgresql_user:
+    name: "postgres"
+    password: "{{ postgresql_password }}"
+    state: present
+  no_log: true
+  become: true
+  become_user: "postgres"
+
+- name: Change pg_hba.conf back
+  ansible.builtin.lineinfile:
+    path: /etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf
+    line: "local all postgres peer #tmp_pw_change"
+    state: absent
+  notify:
+    - restart postgresql

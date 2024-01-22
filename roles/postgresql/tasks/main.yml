@@ -87,3 +87,9 @@
     firstmatch: true
   notify:
     - restart postgresql
+
+- name: Change Password
+  ansible.builtin.include_tasks:
+    file: change_pw.yml
+  when:
+    - postgresql_changepw | bool
