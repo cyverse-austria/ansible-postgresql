@@ -2,5 +2,4 @@
 postgresql_version: 12
 postgresql_subnet: "0.0.0.0/0"
 postgresql_password: "changemeplease"
-postgresql_changepw: false
 # defaults file for postgresql
